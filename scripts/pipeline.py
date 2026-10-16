@@ -7,6 +7,7 @@ Reference for the method: Golub et al. (1999), Science 286:531-537.
 No code was reused from other sources; scikit-learn is used for CV, scaling,
 logistic regression and metrics.
 """
+import hashlib
 import itertools
 import json
 from pathlib import Path
@@ -27,6 +28,12 @@ RES.mkdir(exist_ok=True)
 
 SEED = 32
 N_SELECTED = 10
+
+# Integrity check: the data file must match the SHA256 recorded in data/MANIFEST.json
+manifest = json.loads((ROOT / "data" / "MANIFEST.json").read_text())
+sha = hashlib.sha256((ROOT / "data" / "wdbc.csv").read_bytes()).hexdigest()
+if sha != manifest["sha256"]:
+    raise SystemExit(f"wdbc.csv does not match MANIFEST.json (got {sha}); do not replace the supplied file.")
 
 
 # Load data. malignant = 1 (positive class), benign = 0
