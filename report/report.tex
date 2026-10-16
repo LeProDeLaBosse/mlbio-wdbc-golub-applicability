@@ -111,7 +111,7 @@ intervals (e.g.\ bootstrap); comparison with cytopathologist reading; and evalua
 
 \section{Reproducibility of the method from the paper}
 In this work the computation itself is fully reproducible: a fixed seed, a locked environment (uv) and a SHA256-checked data file give
-identical numbers on each run. However, I did not re-run Golub et al.'s own data, so I cannot judge their numerical results; I can
+identical numbers on each run. However, I did not re-run Golub et al.'s own data nor check what they actually released, so I cannot judge their numerical results; I can
 only comment on what had to be decided here. Several details change the outcome and must be stated: the standard deviation
 convention, the number of features and how they are chosen, the decision threshold and handling of $V=0$, the absence or use of
 prediction strength/abstention, and that all estimation, including feature selection, is done inside each training fold. In general, to make

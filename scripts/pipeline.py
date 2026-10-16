@@ -78,7 +78,7 @@ plt.tight_layout(); plt.savefig(RES / "fig2_correlation.png", dpi=150); plt.clos
 def wv_fit(X_tr, y_tr, k=N_SELECTED):
     X1, X0 = X_tr[y_tr == 1], X_tr[y_tr == 0]
     mu1, mu0 = X1.mean(0), X0.mean(0)
-    # sample standard deviation (ddof=1), as in Golub's per-class estimates
+    # sample standard deviation (ddof=1); the assignment does not specify the convention
     s1, s0 = X1.std(0, ddof=1), X0.std(0, ddof=1)
     denom = s1 + s0
     denom[denom == 0] = np.finfo(float).eps  # guard that shouldn't be used but just in case
@@ -182,7 +182,7 @@ results.update(
 (RES / "results.json").write_text(json.dumps(results, indent=2))
 
 
-# LaTeX inputs: numbers and tables used by report/report.tex (nothing typed by hand)
+# LaTeX inputs: numbers and tables used by report/report.tex (tables and main numbers)
 def tx(s):
     return str(s).replace("_", r"\_")
 
