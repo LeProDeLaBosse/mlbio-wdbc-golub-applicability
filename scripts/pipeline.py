@@ -28,9 +28,8 @@ RES.mkdir(exist_ok=True)
 SEED = 32
 N_SELECTED = 10
 
-# ----------------------------------------------------------------------------
-# Load data. malignant = 1 (positive class), benign = 0.
-# ----------------------------------------------------------------------------
+
+# Load data. malignant = 1 (positive class), benign = 0
 df = pd.read_csv(ROOT / "data" / "wdbc.csv")
 feature_names = [c for c in df.columns if c not in ("sample_id", "diagnosis")]
 X = df[feature_names].to_numpy(dtype=float)
@@ -38,9 +37,8 @@ y = (df["diagnosis"] == "malignant").astype(int).to_numpy()
 results = {"seed": SEED, "n_samples": int(len(df)), "n_features": len(feature_names),
            "n_malignant": int(y.sum()), "n_benign": int((1 - y).sum())}
 
-# ----------------------------------------------------------------------------
-# 1. Data exploration (descriptive only: nothing here is used for selection)
-# ----------------------------------------------------------------------------
+
+# 1. Data exploration. Descriptive only, nothing here is used for selection
 expl = pd.DataFrame({
     "mean_benign": df[y == 0][feature_names].mean(),
     "mean_malignant": df[y == 1][feature_names].mean(),
@@ -68,17 +66,15 @@ plt.colorbar(im, label="Pearson correlation")
 ax.set_title("Correlation between the 30 features")
 plt.tight_layout(); plt.savefig(RES / "fig2_correlation.png", dpi=150); plt.close()
 
-# ----------------------------------------------------------------------------
+
 # 2. Weighted voting (Golub et al. 1999), everything estimated on the train fold
-# ----------------------------------------------------------------------------
 def wv_fit(X_tr, y_tr, k=N_SELECTED):
-    """Return selected feature indices, their weights and midpoints."""
     X1, X0 = X_tr[y_tr == 1], X_tr[y_tr == 0]
     mu1, mu0 = X1.mean(0), X0.mean(0)
     # sample standard deviation (ddof=1), as in Golub's per-class estimates
     s1, s0 = X1.std(0, ddof=1), X0.std(0, ddof=1)
     denom = s1 + s0
-    denom[denom == 0] = np.finfo(float).eps  # guard (never triggered here)
+    denom[denom == 0] = np.finfo(float).eps  # guard that shouldn't be used but just in case
     w = (mu1 - mu0) / denom                    # signal-to-noise weight
     sel = np.argsort(-np.abs(w))[:k]           # ten largest |w|
     mid = (mu1 + mu0) / 2                      # decision midpoint per feature
@@ -86,18 +82,16 @@ def wv_fit(X_tr, y_tr, k=N_SELECTED):
 
 
 def wv_score(X_te, sel, w, mid):
-    """V(x) = sum_g w_g (x_g - midpoint_g); malignant if V >= 0."""
+    # V(x) = sum_g w_g (x_g - midpoint_g); malignant if V >= 0
     return ((X_te[:, sel] - mid) * w).sum(1)
 
 
-# ----------------------------------------------------------------------------
 # 3-5. Repeated stratified 5-fold CV (3 repeats), same splits for both models
-# ----------------------------------------------------------------------------
 cv = RepeatedStratifiedKFold(n_splits=5, n_repeats=3, random_state=SEED)
 rows, selected_sets, cms = [], [], {}
 for i, (tr, te) in enumerate(cv.split(X, y)):
     rep, fold = i // 5 + 1, i % 5 + 1
-    # --- weighted voting
+    # weighted voting
     sel, w, mid = wv_fit(X[tr], y[tr])
     V = wv_score(X[te], sel, w, mid)
     pred = (V >= 0).astype(int)
@@ -110,7 +104,7 @@ for i, (tr, te) in enumerate(cv.split(X, y)):
                      accuracy=(pred == y[te]).mean(),
                      sensitivity=cm[1, 1] / cm[1].sum(),
                      specificity=cm[0, 0] / cm[0].sum()))
-    # --- logistic regression: scaler fitted on the training fold only
+    # logistic regression, scaler fitted on the training fold only
     sc = StandardScaler().fit(X[tr])
     lr = LogisticRegression(solver="liblinear", C=1.0, max_iter=1000).fit(sc.transform(X[tr]), y[tr])
     p = lr.predict_proba(sc.transform(X[te]))[:, 1]
@@ -147,9 +141,8 @@ diff = {m: dict(mean=float((wv[m] - lr_[m]).mean()), sd=float((wv[m] - lr_[m]).s
                 wv_better_in=int((wv[m] > lr_[m]).sum()), tie=int((wv[m] == lr_[m]).sum()))
         for m in ("auc", "balanced_accuracy")}
 
-# ----------------------------------------------------------------------------
+
 # 4. Feature selection stability
-# ----------------------------------------------------------------------------
 freq = pd.Series(0, index=feature_names, name="selection_count")
 for s in selected_sets:
     freq[s] += 1
@@ -181,9 +174,8 @@ results.update(
 )
 (RES / "results.json").write_text(json.dumps(results, indent=2))
 
-# ----------------------------------------------------------------------------
+
 # LaTeX inputs: numbers and tables used by report/report.tex (nothing typed by hand)
-# ----------------------------------------------------------------------------
 def tx(s):
     return str(s).replace("_", r"\_")
 
